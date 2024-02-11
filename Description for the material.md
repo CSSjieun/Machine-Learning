@@ -58,6 +58,18 @@ voting_clf.score(X_test, y_test)
 
 → As expected, the voting classifier performs slightly better than the other individual classifiers.
 
+Using **soft voting**
+If all classifiers can predict the probability of a class (i.e., if there is a predict_proba() method), the predictions of individual classifiers can be averaged to predict the class with the highest probability.
+
+```python
+voting_clf.voting = "soft"
+voting_clf.named_estimators["svc"].probability = True
+voting_clf.fit(X_train, y_train)
+voting_clf.score(X_test, y_test)
+```
+0.92
+→ Using soft voting, we achieved 92% accuracy.
+
 
 
 

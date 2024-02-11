@@ -70,6 +70,50 @@ voting_clf.score(X_test, y_test)
 0.92
 → Using soft voting, we achieved 92% accuracy.
 
+This code trains an ensemble of 500 decision tree classifiers.
 
+```python
+from sklearn.ensemble import BaggingClassifier
+from sklearn.tree import DecisionTreeClassifier
+
+bag_clf = BaggingClassifier(DecisionTreeClassifier(), n_estimators = 500, max_samples = 100, n_jobs = -1, random_state = 42)
+
+bag_clf.fit(X_train, y_train)
+```
+
+Bagging has a slightly higher bias than pasting because it adds diversity to the subset that each predictor learns, but adding diversity means that the variance of the ensemble is reduced by reducing the correlation between predictors.
+
+### 7.2.2. OOB (Out-of-Bag) Score
+
+Using bagging means that, on average, only about 63% of the training samples are sampled for each predictor. <br/>
+The left 37% is called OOB (out-of-bag) sample.
+
+```python
+bag_clf = BaggingClassifier(DecisionTreeClassifier(), n_estimators = 500, oob_score = True, n_jobs = -1, random_state = 42)
+bag_clf.fit(X_train, y_train)
+bag_clf.oob_score_
+```
+0.896
+
+Based on the OOB evaluation results, it appears that this BaggingClassifier will achieve approximately 89.6% accuracy on the test set.
+
+Let's check it.
+```python
+from sklearn.metrics import accuracy_score
+y_pred = bag_clf.predict(X_test)
+accuracy_score(y_test, y_pred)
+```
+0.9120000000
+
+We got about 92% accuracy on the test set. The OOB score was slightly pessimistic, falling by more than 2%.
+
+```python
+bag_clf.oob_decision_function_[:3]
+```
+array([[0.32352941, 0.67647059],
+       [0.3375    , 0.6625    ],
+       [1.        , 0.        ]])
+       
+→ The OOB score estimates a 67.64% probability that the first training sample will belong to the positive class and a 32.4% probability that it will belong to the negative class.
 
 

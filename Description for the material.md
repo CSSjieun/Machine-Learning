@@ -116,4 +116,47 @@ array([[0.32352941, 0.67647059],
        
 → The OOB score estimates a 67.64% probability that the first training sample will belong to the positive class and a 32.4% probability that it will belong to the negative class.
 
+### 7.4 Random Forest
+
+Below is code to train a random forest classifier with 500 trees (with up to 16 leaf nodes) on all available CPU cores.
+
+```python
+from sklearn.ensemble import RandomForestClassifier
+
+rnd_clf = RandomForestClassifier(n_estimators = 500, max_leaf_nodes = 16, n_jobs = -1, random_state = 42)
+rnd_clf.fit(X_train, y_train)
+y_pred_rf = rnd_clf.predict(X_test)
+```
+
+The random forest algorithm injects more randomness by finding the best feature among randomly selected feature candidates when splitting nodes in a tree, instead of finding the best feature among all features.
+
+**BaggingClassifier**
+
+```python
+bag_clf = BaggingClassifier(DecisionTreeClassifier(max_features = "sqrt", max_leaf_nodes = 16), n_estimators = 500, n_jobs = -1, random_state = 42)
+```
+
+Such extremely random tree's random forest is called extremely randomized tree ensemble (extra-tree).
+
+To make extra tree, we can use the code of ExtraTreesClassifier from scikit-learn.
+
+### 7.4.2 Feature Importance
+
+```python
+from sklearn.datasets import load_iris
+
+iris = load_iris(as_frame = True)
+rnd_clf = RandomForestClassifier(n_estimators = 500, random_state = 42)
+rnd_clf.fit(iris.data, iris.target)
+for score, name in zip(rnd_clf.feature_importances_, iris.data.columns):
+  print(round(score, 2), name)
+```
+
+0.11 | sepal length (cm)
+
+0.02 | sepal width (cm)
+
+0.44 | petal length (cm)
+
+0.42 | petal width (cm)
 

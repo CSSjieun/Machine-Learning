@@ -64,4 +64,82 @@ voting_clf.score(X_test, y_test)
 Sampling method that allows duplicates in the training set: bagging
 A method of sampling without allowing duplicates in the training set: pasting
 
+**BaggingClassifier & BaggingRegressor**
+
+This code trains an ensemble of 500 decision tree classifiers. 
+Each classifier is trained with 100 randomly selected samples, allowing for duplicates in the training set.
+(This is the case of bagging, if you want to use pasting then specify bootstrap = FALSE)
+
+```{python}
+from sklearn.ensemble import BaggingClassifier
+from sklearn.tree import DecisionTreeClassifier
+
+bag_clf = BaggingClassifier(DecisionTreeClassifier(), n_estimators = 500, max_samples = 100, n_jobs = -1, random_state = 42)
+
+bag_clf.fit(X_train, y_train)
+```
+
+### 7.2.2 OOB Score
+
+```{python}
+bag_clf = BaggingClassifier(DecisionTreeClassifier(), n_estimators = 500, oob_score = True, n_jobs = -1, random_state = 42)
+bag_clf.fit(X_train, y_train)
+bag_clf.oob_score_
+```
+
+Based on the OOB evaluation results, it appears that this BaggingClassifier will achieve approximately 89.6% accuracy on the test set. 
+Let's check it.
+
+```{python}
+from sklearn.metrics import accuracy_score
+y_pred = bag_clf.predict(X_test)
+accuracy_score(y_test, y_pred)
+```
+
+We got about 92% accuracy on the test set. The OOB score was slightly pessimistic, falling by more than 2%.
+
+```{python}
+bag_clf.oob_decision_function_[:3]
+```
+
+### 7.4. Random Forest
+
+Random Forest is decision tree ensemble applying bagging or pasting.
+
+Below is code to train a random forest classifier with 500 trees (with up to 16 leaf nodes) on all available CPU cores.
+
+```{python}
+from sklearn.ensemble import RandomForestClassifier
+
+rnd_clf = RandomForestClassifier(n_estimators = 500, max_leaf_nodes = 16, n_jobs = -1, random_state = 42)
+rnd_clf.fit(X_train, y_train)
+y_pred_rf = rnd_clf.predict(X_test)
+```
+
+The random forest algorithm injects more randomness by finding the best feature among randomly selected feature candidates when splitting nodes in a tree, instead of finding the best feature among all features.
+
+**BaggingClassifier**
+
+```{python}
+bag_clf = BaggingClassifier(DecisionTreeClassifier(max_features = "sqrt", max_leaf_nodes = 16), n_estimators = 500, n_jobs = -1, random_state = 42)
+```
+
+Such extremely random tree's random forest is called extremely randomized tree ensemble (extra-tree).
+
+To make extra tree, we can use the code of ExtraTreesClassifier from scikit-learn.
+
+### 7.4.2 Feature Importance
+
+```{python}
+from sklearn.datasets import load_iris
+
+iris = load_iris(as_frame = True)
+rnd_clf = RandomForestClassifier(n_estimators = 500, random_state = 42)
+rnd_clf.fit(iris.data, iris.target)
+for score, name in zip(rnd_clf.feature_importances_, iris.data.columns):
+  print(round(score, 2), name)
+```
+
+
+
 

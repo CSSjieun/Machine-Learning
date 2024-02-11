@@ -6,7 +6,7 @@ Gathering predictions from a set of predictors (classification or regression mod
 Since a series of predictors is called an ensemble, this is called ensemble learning, and the ensemble learning algorithm is called an ensemble method.
 
 An example of an ensemble method is to train a series of decision tree classifiers by randomly creating different subsets from the training set.
-‘‘‘python
+```python
 from sklearn.datasets import make_moons
-‘‘‘
+```
 

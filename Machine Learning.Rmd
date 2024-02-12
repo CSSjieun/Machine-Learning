@@ -139,6 +139,172 @@ rnd_clf.fit(iris.data, iris.target)
 for score, name in zip(rnd_clf.feature_importances_, iris.data.columns):
   print(round(score, 2), name)
 ```
+## boosting
+
+Ensemble method to create a strong learner by connecting several weak learners. 
+The idea of the boosting method is to train a series of predictors while complementing the previous model.
+
+- AdaBoost(adaptive boosting)
+- Gradient boosting
+
+### 7.5.1 AdaBoost
+
+```{python}
+from sklearn.ensemble import AdaBoostClassifier
+
+ada_clf = AdaBoostClassifier(
+  DecisionTreeClassifier(max_depth = 1), n_estimators = 30, learning_rate = 0.5, random_state = 42
+)
+
+ada_clf.fit(X_train, y_train)
+```
+
+
+### 7.5.2 gradient boosting
+
+**gradient tree boosting/ gradient boosted regression tree (GBRT)**
+
+First, we will create a noisy dataset with a quadratic equation and train DecisionTreeRegressor.
+
+```{python}
+import numpy as np
+from sklearn.tree import DecisionTreeRegressor
+
+np.random.seed(42)
+X = np.random.rand(100, 1) - 0.5
+y = 3*X[:,0]**2 + 0.05 * np.random.randn(100) #y = 3x^2 + gaussian noise
+tree_reg1 = DecisionTreeRegressor(max_depth = 2, random_state = 42)
+tree_reg1.fit(X, y)
+```
+
+Now, we train DecisionTreeRegressor to the residual error from the first predictor.
+
+```{python}
+y2 = y - tree_reg1.predict(X)
+tree_reg2 = DecisionTreeRegressor(max_depth = 2, random_state = 43)
+tree_reg2.fit(X, y2)
+```
+
+So on...
+
+```{python}
+y3 = y2 - tree_reg2.predict(X)
+tree_reg3 = DecisionTreeRegressor(max_depth = 2, random_state = 44)
+tree_reg3.fit(X, y3)
+```
+
+Now we need to add all the predictions from all different trees to make prediciton for the new samples.
+
+```{python}
+X_new = np.array([[-0.4], [0.], [0.5]])
+sum(tree.predict(X_new) for tree in (tree_reg1, tree_reg2, tree_reg3))
+```
+
+```{python}
+from sklearn.ensemble import GradientBoostingRegressor
+
+gbrt = GradientBoostingRegressor(max_depth = 2, n_estimators = 3, learning_rate = 1.0, random_state = 42)
+gbrt.fit(X,y)
+```
+
+```{python}
+gbrt_best = GradientBoostingRegressor(
+  max_depth = 2, learning_rate = 0.05, n_estimators = 500, n_iter_no_change = 10, random_state = 42)
+gbrt_best.fit(X, y)
+gbrt_best.n_estimators_
+```
+
+### 7.5.3 histogram-based gradient boosting (HGB)
+
+- HistGradientBoostingRegressor
+- HistGradientBoostingClassifier
+
+```{python}
+from sklearn.pipeline import make_pipeline
+from sklearn.compose import make_column_transformer
+from sklearn.ensemble import HistGradientBoostingRegressor
+from sklearn.preprocessing import OrdinalEncoder
+
+hgb_reg = make_pipeline(
+  make_column_transformer((OrdinalEncoder(), ["ocean_proximity"]),
+  remainder = "passthrough"),
+  HistGradientBoostingRegressor(categorical_features = [0], random_state = 42)
+)
+
+```
+
+```{python}
+from pathlib import Path
+import pandas as pd
+import tarfile
+import urllib.request
+
+def load_housing_data():
+  tarball_path = Path("./housing/housing.csv")
+  return pd.read_csv(Path("./housing/housing.csv"))
+    
+housing = load_housing_data()
+
+from sklearn.model_selection import StratifiedShuffleSplit
+
+housing["income_cat"] = pd.cut(housing["median_income"],
+bins = [0, 1.5, 3.0, 4.5, 6., np.inf],
+labels = [1,2,3,4,5])
+
+splliter = StratifiedShuffleSplit(n_splits = 10, test_size = 0.2, random_state = 42)
+strat_splits = []
+
+for train_index, test_index in splliter.split(housing, housing["income_cat"]):
+  strat_train_set_n = housing.iloc[train_index]
+  strat_test_set_n = housing.iloc[test_index]
+  strat_splits.append([strat_train_set_n, strat_test_set_n])
+  
+strat_train_set, strat_test_set = train_test_split(housing, test_size = 0.2, stratify = housing["income_cat"], random_state = 42)
+
+housing_labels = strat_train_set["median_house_value"].copy()
+
+import matplotlib.pyplot as plt
+
+housing.plot(kind = "scatter", x="longitude", y="latitude", grid=True, alpha = 0.2)
+plt.xlabel("longitude")
+plt.ylabel("latitude")
+plt.show()
+
+hgb_reg.fit(housing, housing_labels)
+
+housing.plot(kind = "scatter", x="longitude", y="latitude", grid=True, 
+s = housing["population"] / 100, label = "population", c = "median_house_value", cmap = "jet", colorbar = True)
+cax = plt.gcf().get_axes()[1]
+cax.set_ylabel("median house cost")
+plt.xlabel("longitude")
+plt.ylabel("latitude")
+legend = True, sharex = False, figsize = (10,7)
+
+plt.show()
+```
+
+## Staking (stacked generalization)
+
+```{python}
+from sklearn.ensemble import StackingClassifier
+
+stacking_clf = StackingClassifier(
+  estimators = [("lr", LogisticRegression(random_state = 42)),
+  ("rf", RandomForestClassifier(random_state = 42)),
+  ("svc", SVC(probability = True, random_state = 42))],
+  final_estimator = RandomForestClassifier(random_state = 43),
+  cv = 5
+)
+
+stacking_clf.fit(X_train, y_train)
+```
+
+## Chapter 8. Dimension Reduction
+
+
+
+
+
 
 
 
